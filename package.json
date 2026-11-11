@@ -1,17 +1,20 @@
 {
   "name": "kasi-voices",
   "private": true,
-  "version": "0.1.0",
-  "description": "KasiVoices monorepo; Phase 1 browser-only audio recorder",
+  "version": "0.4.0",
+  "description": "KasiVoices offline-first community archive — complete Phase 4 pilot",
   "workspaces": [
     "frontend",
     "backend"
   ],
   "scripts": {
     "dev": "npm run dev --workspace @kasivoices/frontend",
+    "dev:backend": "npm run dev --workspace @kasivoices/backend",
     "build": "npm run build --workspace @kasivoices/frontend",
     "preview": "npm run preview --workspace @kasivoices/frontend",
-    "test": "npm run test --workspace @kasivoices/frontend"
+    "test": "npm run test --workspaces",
+    "test:backend": "npm run test --workspace @kasivoices/backend",
+    "start:backend": "npm run start --workspace @kasivoices/backend"
   },
   "engines": {
     "node": ">=22.12.0"
