@@ -1,26 +1,28 @@
-# Development status
+# KasiVoices development status
 
-- [x] Phase 0 — System architecture and folder layout [COMPLETED]
-- [x] Phase 1 — Local HTML5 audio recorder [COMPLETED]
-- [x] Phase 2 — Dexie IndexedDB story storage, offline detection and caching [COMPLETED]
-- [ ] Phase 3 — Leaflet map visualizer [PENDING]
-- [ ] Phase 4 — Express, MongoDB and frontend sync [PENDING]
+- [x] Phase 0 — System architecture & folder layout [COMPLETED]
+- [x] Phase 1 — Native HTML5 audio recorder [COMPLETED]
+- [x] Phase 2 — Dexie IndexedDB storage & offline shell [COMPLETED]
+- [x] Phase 3 — Leaflet interactive map & approximate local pinning [COMPLETED]
+- [ ] Phase 4 — Express, MongoDB & optional explicit sync [PENDING]
 
-## Delivered in Phase 2
+## Phase 3 delivered
 
-- Browser-local recording persistence with metadata and audio Blob stored in separate IndexedDB object stores via an atomic transaction.
-- Local archive listing, listening, renaming, deletion, file download and save retry.
-- Connection-status indicator; no network probes or uploads.
-- Production-only, build-versioned service-worker cache for the small app shell.
-- Optional storage persistence request, storage estimates and explicit warnings about browser eviction.
-- Automated database and connectivity helper tests.
+- An on-demand interactive Leaflet.js map of the Olievenhoutbosch vicinity.
+- OpenStreetMap tiles with visible attribution, fetched only when the map is opened. Public OSM tiles are never bulk downloaded or cached in the service worker.
+- Users can manually choose a broad position by tapping the map, or choose one of nine offline-friendly approximate areas.
+- All coordinates are snapped to a coarse approximately 500 m grid and restricted to a 4.5 km vicinity of the community center. The radius is an editing convenience, not an official locality boundary.
+- Users opt in per saved story; no browser geolocation/GPS permission is requested.
+- IndexedDB schema version 2 adds a pin timestamp index without replacing existing audio. Pins can be changed and removed.
+- Pinned stories are shown on the map using lightweight circle markers and in a text list that works offline. A capped local story query avoids reading audio blobs or an unbounded archive.
+- Leaflet and its CSS are dynamically imported only when the user opens the map. The production offline shell build deliberately excludes deferred map chunks.
 
-## Deferred by design
+## Testing
 
-- Map views, coordinates, pinning and Leaflet (Phase 3).
-- Server API, MongoDB, upload queue and synchronization (Phase 4).
-- All AI and AI-linked functionality (excluded from entire product).
+GitHub Actions runs `npm install`, `npm test`, and `npm run build`. Tests cover privacy rounding, invalid positions, Dexie migration, pin lifecycle, and the existing recording / offline features.
 
-## Verification criteria
+On-device testing of real map tile connectivity, map accessibility, mobile bandwidth, and offline behavior remains necessary before public launch.
 
-Automated GitHub Actions runs `npm install`, `npm test` and `npm run build`. Real-browser microphone permission, offline reload, storage eviction and device behavior should be validated manually on representative low-end Android devices before any public deployment.
+## Still out of scope
+
+Express routing, MongoDB, authentication, API uploads and synchronization are reserved strictly for Phase 4. No AI components, engines, models, APIs or AI-based features are used.

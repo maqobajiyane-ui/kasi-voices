@@ -1,51 +1,27 @@
-# KasiVoices architecture — updated through Phase 2
+# KasiVoices — system architecture through Phase 3
 
-## Local-first boundaries
+## Offline-first structure
 
-```text
-Browser-native microphone (MediaRecorder)
-              |
-              v
-Audio Blob + story metadata
-              |
-              v
-Dexie.js / IndexedDB
-  | stories: metadata only
-  | recordings: Blobs, keyed by story ID
-              |
-              +--> Story list / audio playback / local download
-              |
-              +--> Future sync, strictly user-controlled (Phase 4)
+- **Browser recording:** native MediaRecorder, a short recording cap, and no upload.
+- **Local data:** Dexie.js v2. Story metadata and audio Blobs are stored separately in IndexedDB. Stories may optionally include `pin` (coarse coordinates and precision marker) and `pinUpdatedAt`.
+- **Offline shell:** Vite outputs a versioned application shell precached by a service worker. Only eagerly imported CSS/JS, index HTML, manifest, icon and offline fallback are included.
+- **Deferred map:** opening the map dynamically imports Leaflet + its CSS; a single OSM tile layer retrieves on-demand tiles, with attribution. The production service worker does not cache map tiles or deferred map assets.
+- **No external AI or application APIs.** Backend remains a Phase 4 placeholder.
 
-Production service worker --> app-shell HTML, JS, CSS and small local assets only
-Connection banner --> browser online/offline events (advisory, not a ping)
-```
+## Privacy contract
 
-Vite + Vanilla JS + Tailwind CSS make up the client. Leaflet, OpenStreetMap, Express, and MongoDB remain reserved for subsequent phases. No AI.
+No GPS or browser geolocation request is used. Users opt in by choosing a pin location manually. Pin coordinates are snapped to a 0.005-degree grid, approximately 500–550 m per cell, and constrained to a 4.5 km editing radius around the Olievenhoutbosch reference center. The center and directional options are approximate orientation aids, not official administrative boundaries.
 
-## Data model version 1
+Only the coarse pin is saved locally; exact clicked coordinates are never persisted. Removing a pin retains the story and audio. Rendering markers uses DOM text nodes instead of interpreting story titles as HTML.
 
-`stories` object store has `id` as primary key, `createdAt` and `updatedAt` indexes. Each story has a title, media type, filename, bytes, duration, and a `syncStatus: local` marker. `recordings` contains `{ id, audioBlob }`. A single transaction inserts/removes related rows.
+## Offline map fallback
 
-This data model does not initiate uploading or imply user consent for publication. The `syncStatus` field is informational for future migration only.
+A text list of saved pinned stories and a manual selection of nine approximate directional areas remains functional without tiles. The optional interactive map consumes mobile data when opened; public OSM tiles must not be bulk fetched or used for offline pack generation.
 
-## Cache policy
+## On-device storage and media
 
-The build generates `dist/sw.js` with a fingerprinted cache name based on compiled shell assets. The worker precaches only production `index.html`, `offline.html`, `manifest.webmanifest`, `favicon.svg`, and built CSS/JS. It intercepts same-origin navigation for shell fallback and only serves explicitly allowlisted resources from the cache. It never caches audio Blobs, story data, API responses, or map tiles. Old versioned shell caches are deleted on activation.
+Audio Blobs remain in their own IndexedDB object store. Metadata-only indexed queries keep memory use low, with bounded lists. Storage might be evicted; encourage downloadable audio backups. Existing version-1 stories and recordings migrate to version 2 intact.
 
-Service workers are registered only in production (preview/build output) and only in secure contexts. No browser-based caching is registered during Vite dev.
+## Next phase (not implemented)
 
-## Low bandwidth and device safeguards
-
-The recorder uses a short duration cap, requests a compact audio bitrate where supported, limits total collected chunk bytes, and avoids loading every saved Blob into the archive list. The story list displays a bounded first page. Blob URLs are revoked when no longer needed. No analytics or CDN runtime requests.
-
-## Storage and consent risks
-
-Browser IndexedDB may be unavailable or evicted under space pressure. Show a recoverable error, offer downloads, and permit requesting persistent storage where supported. Users should export important files. Recordings must not silently sync. Consent to record, publish, and disclose locations must be addressed before Phase 4.
-
-## Future boundaries
-
-- Phase 3: consent-first optional approximate location pins; Leaflet dynamically loaded; tile terms and attribution respected.
-- Phase 4: conventional first-party HTTPS API; MongoDB metadata; separate media storage; explicit, idempotent, resumable uploads.
-
-No AI engines, APIs, models, or features are permitted.
+Phase 4 may introduce a conventional Express API, MongoDB metadata and separately secured media storage with clearly consented, idempotent sync. No AI functionality is permitted.

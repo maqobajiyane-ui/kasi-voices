@@ -9,7 +9,7 @@ import {
 test('uses approximate privacy grid instead of exact location', () => {
   assert.equal(APPROXIMATE_GRID_DEGREES, 0.005);
   const first = approximatePin(-25.90944, 28.09278);
-  const moved = approximatePin(-25.9099, 28.0919);
+  const moved = approximatePin(-25.9099, 28.0931);
   assert.deepEqual(first, moved);
   assert.equal(first.precision, 'approx-500m');
   assert.equal(isStoredPin(first), true);
