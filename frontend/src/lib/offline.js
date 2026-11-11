@@ -1,7 +1,7 @@
 // Connection events are advisory: navigator.onLine cannot prove the internet works.
 export function connectionStatus(isOnline) {
   return isOnline
-    ? { label: 'Network detected', detail: 'Your stories stay on this device. No uploads occur.' }
+    ? { label: 'Network detected', detail: 'Your stories stay on this device. Uploads require an explicit Publish action.' }
     : { label: 'Offline mode', detail: 'Record and open saved stories without mobile data.' };
 }
 

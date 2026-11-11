@@ -16,6 +16,11 @@ export function createArchiveDatabase(name = DEFAULT_DATABASE_NAME) {
     stories: 'id, createdAt, updatedAt, pinUpdatedAt',
     recordings: 'id',
   });
+  // Data-only version bump. Existing recordings and approximate pins are preserved.
+  database.version(3).stores({
+    stories: 'id, createdAt, updatedAt, pinUpdatedAt, syncStatus',
+    recordings: 'id',
+  });
   return database;
 }
 
@@ -96,6 +101,23 @@ export function createLocalArchive(database = createArchiveDatabase()) {
       });
     },
 
+    async updatePublication(id, changes) {
+      const allowed = [
+        'syncStatus', 'deleteToken', 'publishedAt', 'sharedPin',
+        'publishedTitle', 'publishedUpdatedAt',
+      ];
+      for (const key of Object.keys(changes)) {
+        if (!allowed.includes(key)) throw new Error('Unsupported publication field.');
+      }
+      return database.transaction('rw', database.stories, async () => {
+        const story = await database.stories.get(id);
+        if (!story) throw new Error('Story not found in this browser.');
+        Object.assign(story, changes);
+        await database.stories.put(story);
+        return story;
+      });
+    },
+
     async getRecording(id) {
       const entry = await database.recordings.get(id);
       return entry?.audioBlob || null;
@@ -109,6 +131,10 @@ export function createLocalArchive(database = createArchiveDatabase()) {
 
     async removeStory(id) {
       await database.transaction('rw', database.stories, database.recordings, async () => {
+        const story = await database.stories.get(id);
+        if (story?.deleteToken || story?.syncStatus === 'published' || story?.syncStatus === 'uploading') {
+          throw new Error('Withdraw the published copy before deleting this story locally.');
+        }
         await database.recordings.delete(id);
         await database.stories.delete(id);
       });

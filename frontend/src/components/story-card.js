@@ -102,7 +102,7 @@ export function mountStoryLibrary(root) {
       new Date(story.createdAt).toLocaleDateString(),
       formatDuration(story.durationMs),
       readableBytes(story.bytes),
-      'Saved locally',
+      story.syncStatus === 'published' ? 'Published copy exists' : story.syncStatus === 'uploading' ? 'Uploading' : story.syncStatus === 'failed' ? 'Upload failed: retry manually' : 'Local only',
       isStoredPin(story.pin) ? formatApproximatePin(story.pin) : 'Not pinned',
     ].join(' · ');
 
@@ -122,6 +122,10 @@ export function mountStoryLibrary(root) {
         }
       }),
       actionButton('Delete', async () => {
+        if (story.syncStatus === 'published' || story.syncStatus === 'uploading' || story.deleteToken) {
+          setStatus('Withdraw the published copy in the Publish section before deleting the local recording.', true);
+          return;
+        }
         if (!window.confirm('Permanently delete this recording from this device? Download it first if you need a copy.')) return;
         try {
           if (activeStoryId === story.id) closePreview();
@@ -129,7 +133,7 @@ export function mountStoryLibrary(root) {
           setStatus('Recording permanently deleted from this browser.');
           await refresh();
         } catch {
-          setStatus('Could not delete this recording. Try again.', true);
+          setStatus('Could not delete this recording. If it was published, withdraw the remote copy first.', true);
         }
       }, true),
     );
