@@ -1,0 +1,7 @@
+{
+  "name": "@kasivoices/frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Phase 0 placeholder; runtime dependencies and scripts added in later phases"
+}
