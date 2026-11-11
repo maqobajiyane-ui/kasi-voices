@@ -1,5 +1,6 @@
 import { formatDuration } from '../lib/audio.js';
 import { localArchive } from '../lib/db.js';
+import { formatApproximatePin, isStoredPin } from '../lib/geolocation.js';
 import { storageEstimate, requestStorageProtection } from '../lib/offline.js';
 
 const PAGE_SIZE = 12;
@@ -102,6 +103,7 @@ export function mountStoryLibrary(root) {
       formatDuration(story.durationMs),
       readableBytes(story.bytes),
       'Saved locally',
+      isStoredPin(story.pin) ? formatApproximatePin(story.pin) : 'Not pinned',
     ].join(' · ');
 
     const actions = document.createElement('div');

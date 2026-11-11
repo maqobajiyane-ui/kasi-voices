@@ -3,12 +3,21 @@ import './styles/main.css';
 import { mountAudioRecorder } from './components/audio-recorder.js';
 import { mountStoryLibrary } from './components/story-card.js';
 import { mountConnection } from './components/connectivity-banner.js';
+import { mountMapPage } from './pages/map.js';
 import { registerOfflineShell } from './lib/offline.js';
 
-// Phase 2: local-first Dexie drafts and bounded production app-shell caching.
-// No map tiles, backend calls, uploads or AI.
+// Phase 3: the interactive Leaflet library is loaded only after opening the map.
+// Pinned story coordinates never leave IndexedDB. No backend or AI logic.
 const library = mountStoryLibrary(document.querySelector('#story-library'));
-mountAudioRecorder(document.querySelector('#audio-recorder'), { onSaved: () => library.refresh() });
+const map = mountMapPage(document.querySelector('#story-map'), {
+  onChange: () => library.refresh(),
+});
+mountAudioRecorder(document.querySelector('#audio-recorder'), {
+  onSaved: async () => {
+    await library.refresh();
+    await map.refresh();
+  },
+});
 mountConnection(document.querySelector('#connectivity-banner'));
 
 const cacheNote = document.querySelector('[data-offline-shell-status]');

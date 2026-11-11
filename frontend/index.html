@@ -19,7 +19,7 @@
             <span class="mt-1 block text-xs font-medium tracking-wide text-[#587467]">Community story archive</span>
           </span>
         </a>
-        <span class="rounded-full border border-[#d9e0d6] bg-white px-3 py-2 text-xs font-semibold text-[#3c6554]">PHASE 02</span>
+        <span class="rounded-full border border-[#d9e0d6] bg-white px-3 py-2 text-xs font-semibold text-[#3c6554]">PHASE 03</span>
       </header>
 
       <div id="connectivity-banner" data-connection="online" class="mx-auto mt-5 flex max-w-2xl items-start gap-3 rounded-2xl border border-[#cdd9cf] bg-[#eef4ee] px-4 py-3 text-sm" role="status" aria-live="polite">
@@ -120,6 +120,42 @@
           </div>
         </section>
 
+        <section id="story-map" class="mt-8 rounded-[1.75rem] border border-[#dae2d8] bg-white p-5 shadow-[0_14px_45px_rgba(23,61,49,0.04)] sm:p-8" aria-labelledby="map-heading">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p class="text-xs font-extrabold uppercase tracking-[.18em] text-[#aa5f38]">Explore the kasi</p>
+              <h2 id="map-heading" class="mt-1 text-2xl font-black tracking-tight">Story locations</h2>
+            </div>
+            <span class="rounded-full bg-[#eaf3ed] px-3 py-2 text-xs font-bold text-[#2b6450]">Approximate only</span>
+          </div>
+          <p class="mt-3 text-sm leading-6 text-[#587467]">Pin a saved story to a broad area in Olievenhoutbosch. This never requests your GPS position or shares coordinates. Maps use data when opened; the saved location list stays available offline.</p>
+          <button data-map-open type="button" aria-expanded="false" aria-controls="map-panel" class="mt-5 min-h-12 w-full rounded-xl bg-[#173d31] px-4 py-3 text-sm font-extrabold text-white">Open local story map</button>
+          <div id="map-panel" data-map-panel hidden class="mt-5">
+            <div data-map-canvas class="kasi-map rounded-xl border border-[#dce6dd] bg-[#eef3ed]" aria-label="Interactive map near Olievenhoutbosch. Tap to choose a broad approximate location." role="application"></div>
+            <p class="mt-2 text-xs text-[#657d70]">Map data © OpenStreetMap contributors. Tiles load on demand and are never precached for offline use.</p>
+            <div class="mt-5 grid gap-4">
+              <label class="block text-sm font-extrabold" for="map-story-select">Choose a saved story
+                <select id="map-story-select" data-map-story class="mt-2 block min-h-12 w-full rounded-xl border border-[#bed0c3] bg-white px-3 text-sm font-normal"></select>
+              </label>
+              <label class="block text-sm font-extrabold" for="map-area-select">Or select a broad area (works without map tiles)
+                <select id="map-area-select" data-map-area class="mt-2 block min-h-12 w-full rounded-xl border border-[#bed0c3] bg-white px-3 text-sm font-normal">
+                  <option value="">Choose an approximate area…</option>
+                </select>
+              </label>
+            </div>
+            <div class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <button data-map-save type="button" class="min-h-12 rounded-xl bg-[#173d31] px-4 py-3 text-sm font-extrabold text-white disabled:opacity-50">Save approximate pin</button>
+              <button data-map-clear type="button" class="min-h-12 rounded-xl border border-[#b8cbbd] px-4 py-3 text-sm font-bold text-[#335b46] disabled:opacity-50">Remove selected story pin</button>
+            </div>
+            <p data-map-note role="status" aria-live="polite" data-error="false" class="mt-4 text-sm leading-6 text-[#587467]">Select a saved story, then choose an approximate area.</p>
+            <div class="mt-5 border-t border-[#e4e9e2] pt-5">
+              <h3 class="font-extrabold text-[#173d31]">Your pinned stories <span data-map-count class="ml-2 text-xs font-medium text-[#587467]">0 stories pinned</span></h3>
+              <p data-map-empty class="mt-3 rounded-xl bg-[#f4f7f2] p-4 text-sm text-[#557062]">No pinned stories yet. Your recordings are still safe in the local archive above.</p>
+              <ul data-map-pins class="mt-3 space-y-2" aria-label="Pinned story locations"></ul>
+            </div>
+          </div>
+        </section>
+
         <aside class="mt-7 grid gap-4 rounded-2xl bg-[#eaf0e8] p-5 sm:grid-cols-2 sm:p-6" aria-label="Recording information">
           <div>
             <h3 class="font-extrabold text-[#173d31]">Saved on this device</h3>
@@ -133,7 +169,7 @@
         <p class="mt-5 text-center text-xs leading-5 text-[#75887b]">Recording and offline caching require HTTPS or localhost. To test offline app loading, use a production build and load it online once.</p>
       </main>
 
-      <footer class="border-t border-[#d9e0d6] py-7 text-center text-xs text-[#718679]">KasiVoices · Stories from Olievenhoutbosch · Phase 2</footer>
+      <footer class="border-t border-[#d9e0d6] py-7 text-center text-xs text-[#718679]">KasiVoices · Stories from Olievenhoutbosch · Phase 3</footer>
     </div>
     <script type="module" src="/src/main.js"></script>
   </body>
