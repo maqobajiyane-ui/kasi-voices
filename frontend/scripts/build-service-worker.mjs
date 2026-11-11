@@ -1,38 +1,35 @@
 import { createHash } from 'node:crypto';
-import { readFile, readdir, writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { dirname, join, relative, resolve, sep } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
-const scriptDir = dirname(fileURLToPath(import.meta.url));
-const frontendRoot = resolve(scriptDir, '..');
+const frontendRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(frontendRoot, 'dist');
+const manifest = JSON.parse(await readFile(join(dist, '.vite', 'manifest.json'), 'utf8'));
 
-async function walk(directory) {
-  const results = [];
-  for (const entry of await readdir(directory, { withFileTypes: true })) {
-    const full = join(directory, entry.name);
-    if (entry.isDirectory()) results.push(...await walk(full));
-    else if (entry.isFile()) results.push(full);
-  }
-  return results;
+const eager = new Set();
+function includeEager(key) {
+  if (eager.has(key)) return;
+  eager.add(key);
+  const item = manifest[key];
+  if (!item) throw new Error('Missing Vite manifest item: ' + key);
+  for (const imported of item.imports || []) includeEager(imported);
 }
 
-const allFiles = await walk(dist);
-const allowed = allFiles
-  .map((path) => relative(dist, path).split(sep).join('/'))
-  .filter((path) =>
-    path === 'index.html' ||
-    path === 'offline.html' ||
-    path === 'favicon.svg' ||
-    path === 'manifest.webmanifest' ||
-    /^assets\/[a-zA-Z0-9_./-]+\.(js|css)$/.test(path),
-  )
-  .sort();
+includeEager('index.html');
+const shellAssets = new Set(['index.html', 'offline.html', 'favicon.svg', 'manifest.webmanifest']);
+for (const key of eager) {
+  const item = manifest[key];
+  shellAssets.add(item.file);
+  for (const css of item.css || []) shellAssets.add(css);
+}
+const allowed = [...shellAssets].sort();
 
-if (!allowed.includes('index.html') || !allowed.some((x) => x.endsWith('.js'))) {
-  throw new Error('Production shell files were not found in dist/. Build Vite first.');
+if (!allowed.some((path) => /^assets\/.*\.js$/.test(path))) {
+  throw new Error('No eager frontend JavaScript bundle found.');
 }
 
+// Dynamic chunks such as Leaflet and the map panel are fetched ONLY when opened.
 const hash = createHash('sha256');
 for (const path of allowed) {
   hash.update(path);
@@ -48,4 +45,4 @@ if (output.includes('__KASIVOICES_ASSETS__') || output.includes('__KASIVOICES_CA
   throw new Error('Offline worker template placeholders were not replaced.');
 }
 await writeFile(join(dist, 'sw.js'), output, 'utf8');
-process.stdout.write('Built offline shell: ' + allowed.length + ' files, cache ' + cacheName + '\n');
+process.stdout.write('Built eager offline shell: ' + allowed.length + ' files, cache ' + cacheName + '\n');

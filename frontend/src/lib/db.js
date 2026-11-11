@@ -1,5 +1,6 @@
 import Dexie from 'dexie';
 import { recordingFilename } from './audio.js';
+import { approximatePin, isStoredPin } from './geolocation.js';
 
 const DEFAULT_DATABASE_NAME = 'kasivoices-local-archive';
 
@@ -8,6 +9,11 @@ export function createArchiveDatabase(name = DEFAULT_DATABASE_NAME) {
   database.version(1).stores({
     // Metadata stays separate so listing does not load audio Blobs into memory.
     stories: 'id, createdAt, updatedAt',
+    recordings: 'id',
+  });
+  // v2 adds a small index for pinned-story metadata, without changing audio records.
+  database.version(2).stores({
+    stories: 'id, createdAt, updatedAt, pinUpdatedAt',
     recordings: 'id',
   });
   return database;
@@ -51,6 +57,43 @@ export function createLocalArchive(database = createArchiveDatabase()) {
         database.stories.count(),
       ]);
       return { stories, count };
+    },
+
+    async getStory(id) {
+      return database.stories.get(id);
+    },
+
+    async getPinnedStories({ limit = 150 } = {}) {
+      const safeLimit = Math.max(1, Math.min(150, Math.floor(limit) || 150));
+      const candidates = await database.stories
+        .where('pinUpdatedAt').above(0).reverse().limit(safeLimit).toArray();
+      return candidates.filter((story) => isStoredPin(story.pin));
+    },
+
+    async setStoryPin(id, latitude, longitude) {
+      const pin = approximatePin(latitude, longitude);
+      return database.transaction('rw', database.stories, async () => {
+        const story = await database.stories.get(id);
+        if (!story) throw new Error('Story not found in this browser.');
+        const now = Date.now();
+        story.pin = pin;
+        story.pinUpdatedAt = now;
+        story.updatedAt = now;
+        await database.stories.put(story);
+        return story;
+      });
+    },
+
+    async clearStoryPin(id) {
+      return database.transaction('rw', database.stories, async () => {
+        const story = await database.stories.get(id);
+        if (!story) throw new Error('Story not found in this browser.');
+        delete story.pin;
+        delete story.pinUpdatedAt;
+        story.updatedAt = Date.now();
+        await database.stories.put(story);
+        return story;
+      });
     },
 
     async getRecording(id) {

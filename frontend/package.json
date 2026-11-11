@@ -1,9 +1,9 @@
 {
   "name": "@kasivoices/frontend",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
-  "description": "KasiVoices offline-first PWA with local Dexie story archive",
+  "description": "KasiVoices offline-first story archive and on-demand Leaflet map",
   "scripts": {
     "dev": "vite",
     "build": "vite build && node scripts/build-service-worker.mjs",
@@ -11,7 +11,8 @@
     "test": "node --test tests/*.test.js"
   },
   "dependencies": {
-    "dexie": "^4.4.7"
+    "dexie": "^4.4.7",
+    "leaflet": "^1.9.4"
   },
   "devDependencies": {
     "vite": "^7.1.0",
