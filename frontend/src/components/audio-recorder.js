@@ -1,3 +1,4 @@
+import { localArchive } from '../lib/db.js';
 import {
   MAX_RECORDING_MS,
   MAX_RECORDING_BYTES,
@@ -25,7 +26,7 @@ function microphoneErrorMessage(error) {
   }
 }
 
-export function mountAudioRecorder(root) {
+export function mountAudioRecorder(root, { onSaved = () => {} } = {}) {
   if (!root) throw new Error('KasiVoices recorder root is missing.');
 
   const element = (name) => {
@@ -40,6 +41,7 @@ export function mountAudioRecorder(root) {
   const playbackPanel = element('playback');
   const player = element('player');
   const downloadLink = element('download');
+  const retrySaveButton = element('retry-save');
   const timerDisplay = element('timer');
   const recordingLabel = element('recording-label');
   const hint = element('hint');
@@ -56,6 +58,9 @@ export function mountAudioRecorder(root) {
   let stopReason = 'manual';
   let captureError = false;
   let mounted = true;
+  let savedStoryId = null;
+  let pendingBlob = null;
+  let pendingDurationMs = 0;
 
   function feedbackMessage(message, isError = false) {
     feedback.textContent = message;
@@ -69,12 +74,16 @@ export function mountAudioRecorder(root) {
     startButton.disabled = state !== 'idle';
     stopButton.hidden = state !== 'recording';
     stopButton.disabled = state !== 'recording';
-    playbackPanel.hidden = state !== 'ready';
+    playbackPanel.hidden = state !== 'ready' && state !== 'saving';
+    resetButton.disabled = state !== 'ready';
+    retrySaveButton.hidden = state !== 'ready' || pendingBlob === null;
+    retrySaveButton.disabled = state !== 'ready';
     recordingLabel.textContent = {
       idle: 'Ready to record',
       requesting: 'Requesting microphone',
       recording: 'Recording now',
       stopping: 'Finishing recording',
+      saving: 'Saving on this device',
       ready: 'Recording complete',
     }[state];
     hint.textContent = {
@@ -82,7 +91,8 @@ export function mountAudioRecorder(root) {
       requesting: 'Your browser may ask to use the microphone.',
       recording: 'Speak clearly. Tap Stop when you are done.',
       stopping: 'Preparing your audio preview…',
-      ready: 'Listen back, save a copy, or record again.',
+      saving: 'Your recording is being saved locally.',
+      ready: 'Listen back, download a backup, or record again.',
     }[state];
   }
 
@@ -109,15 +119,19 @@ export function mountAudioRecorder(root) {
       URL.revokeObjectURL(previewUrl);
       previewUrl = null;
     }
+    pendingBlob = null;
   }
 
   function resetRecorder() {
     if (state !== 'ready') return;
-    if (!window.confirm('Discard this recording? It has not been saved automatically.')) return;
+    if (!savedStoryId && !window.confirm('Discard the unsaved recording? Download it first to keep a copy.')) return;
     removePreview();
+    savedStoryId = null;
+    pendingDurationMs = 0;
     timerDisplay.textContent = '00:00';
     startButton.textContent = 'Start recording';
-    feedbackMessage('Ready. Your next recording will stay on this device unless you choose to download it.');
+    resetButton.textContent = 'Record another story';
+    feedbackMessage('Ready. Finished recordings are saved on this device when storage is available.');
     render('idle');
     startButton.focus();
   }
@@ -135,9 +149,35 @@ export function mountAudioRecorder(root) {
     startButton.focus();
   }
 
+  async function saveIntoArchive() {
+    if (!pendingBlob) return;
+    render('saving');
+    feedbackMessage('Saving your recording to this device…');
+    try {
+      const saved = await localArchive.saveRecording(pendingBlob, { durationMs: pendingDurationMs });
+      savedStoryId = saved.id;
+      pendingBlob = null;
+      if (!mounted) return;
+      render('ready');
+      resetButton.textContent = 'Record another story';
+      feedbackMessage('Saved on this device. You can reopen it from Your saved stories, even offline. Download a backup for safety.');
+      try {
+        await onSaved(saved);
+      } catch {
+        // The recording is safe even if the visible library fails to refresh.
+      }
+    } catch {
+      if (!mounted) return;
+      render('ready');
+      resetButton.textContent = 'Discard and record again';
+      feedbackMessage('This recording could not be saved on your device. Download it now or tap Retry saving. It will be lost if you leave this page.', true);
+    }
+  }
+
   function finishRecording() {
     stopTimer();
     releaseStream();
+    const recorderMimeType = recorder?.mimeType || '';
     recorder = null;
 
     if (!mounted) {
@@ -149,8 +189,8 @@ export function mountAudioRecorder(root) {
       return;
     }
 
-    const mimeType = chunks.find((chunk) => chunk.type)?.type || '';
-    const audioBlob = new Blob(chunks, { type: mimeType || 'audio/webm' });
+    const mimeType = chunks.find((chunk) => chunk.type)?.type || recorderMimeType || 'audio/webm';
+    const audioBlob = new Blob(chunks, { type: mimeType });
     chunks = [];
     collectedBytes = 0;
     if (audioBlob.size === 0) {
@@ -162,17 +202,11 @@ export function mountAudioRecorder(root) {
     player.src = previewUrl;
     downloadLink.href = previewUrl;
     downloadLink.download = recordingFilename(new Date(), audioBlob.type);
-    render('ready');
-
-    if (stopReason === 'time-limit') {
-      feedbackMessage('Three-minute limit reached. Your recording is ready to play or download.');
-    } else if (stopReason === 'size-limit') {
-      feedbackMessage('Recording stopped to protect device memory. Play it or download a copy.');
-    } else if (stopReason === 'interrupted') {
-      feedbackMessage('Your microphone connection ended. Your captured audio is ready.');
-    } else {
-      feedbackMessage('Finished. This recording has not been uploaded or saved automatically.');
-    }
+    pendingBlob = audioBlob;
+    pendingDurationMs = Math.min(Date.now() - startedAt, MAX_RECORDING_MS);
+    savedStoryId = null;
+    resetButton.textContent = 'Record another story';
+    void saveIntoArchive();
   }
 
   function stopRecording(reason = 'manual') {
@@ -293,6 +327,7 @@ export function mountAudioRecorder(root) {
   startButton.addEventListener('click', startRecording);
   stopButton.addEventListener('click', () => stopRecording());
   resetButton.addEventListener('click', resetRecorder);
+  retrySaveButton.addEventListener('click', () => { if (state === 'ready' && pendingBlob) void saveIntoArchive(); });
   window.addEventListener('pagehide', cleanup, { once: true });
 
   render('idle');

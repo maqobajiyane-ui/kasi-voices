@@ -82,3 +82,21 @@ audio:focus-visible {
     animation: none;
   }
 }
+
+[data-state="saving"] .status-dot,
+[data-state="requesting"] .status-dot {
+  background-color: #d28a37;
+}
+
+[data-connection="offline"] {
+  border-color: #e0b49b;
+  background-color: #fbefe5;
+}
+
+[data-connection="offline"] > span {
+  background-color: #b96639;
+}
+
+[data-story-status][data-error="true"] {
+  color: #9e3223;
+}
