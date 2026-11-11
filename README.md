@@ -1,36 +1,51 @@
 # KasiVoices
 
-An offline-first, mobile-first community storytelling archive for Olievenhoutbosch, South Africa.
+A lightweight community storytelling archive for Olievenhoutbosch, South Africa.
 
-**Phase 0: System architecture and repository structure only.** No application features are implemented yet.
+## Current build: Phase 1 browser-only audio recorder
 
-## Technology
+The first functional slice supports microphone permission on user action, audio recording, elapsed time, stop, local playback, download, and discard. It uses **Vite + Vanilla JS + Tailwind CSS**, with no runtime CDN dependencies and no framework.
 
-- Frontend: Vite, Vanilla JavaScript, Tailwind CSS, Leaflet with OpenStreetMap data, Dexie/IndexedDB.
-- Backend: Node.js, Express, MongoDB.
-- Architecture: local-first recording and drafts; user-controlled, network-aware synchronization in a later phase.
-- No AI models, AI engines, AI APIs, or AI features. The planned Express endpoints are conventional first-party application routes.
+## Get started
 
-## Workspaces
+Prerequisite: **Node.js 22.12+** and npm.
 
-- `frontend/`: offline-capable PWA UI, recorder, local IndexedDB, maps, and sync components (planned; placeholders only).
-- `backend/`: Express HTTP endpoints, MongoDB metadata, and audio file handling (planned; placeholders only).
-- `docs/`: architecture decisions, privacy/consent, offline policy, and phase tracking.
+```sh
+git clone https://github.com/maqobajiyane-ui/kasi-voices.git
+cd kasi-voices
+npm install
+npm run dev
+```
 
-## Development phases
+Open the local URL printed by Vite (normally `http://localhost:5173`).
 
-- [x] Phase 0 — Architecture and monorepo layout
-- [ ] Phase 1 — Local HTML5 audio recorder (browser-only UI)
+Run checks:
+
+```sh
+npm test
+npm run build
+```
+
+Microphone capture requires a **secure browser context** (localhost or HTTPS). Opening a Vite development URL from a different phone over ordinary HTTP may not permit microphone access; use HTTPS when testing on a phone. The browser chooses the available recording format. On mobile, downloading may use the device's Share/Save flow.
+
+### What Phase 1 does and does not do
+
+- **Does:** browser-native recording, three-minute maximum, 15 MiB collected audio cap, instant local playback and optional file download.
+- **Does not:** automatically persist drafts. If you close/reload the tab or discard the clip without downloading, it is lost.
+- **Does not:** use APIs to upload data, a backend server, service worker, Dexie, Leaflet or AI. Browser-native `getUserMedia` and `MediaRecorder` are used solely for device-local capture.
+
+## Monorepo layout
+
+- `frontend/`: browser UI and recorder implementation.
+- `backend/`: reserved for Phase 4 (nonfunctional placeholders).
+- `docs/`: architecture, consent, repository layout and phase tracking.
+
+## Planned next phases
+
+- [x] Phase 0 — System architecture and folder layout
+- [x] Phase 1 — Local HTML5 audio recorder
 - [ ] Phase 2 — IndexedDB storage and offline detection/caching
-- [ ] Phase 3 — Interactive Leaflet map and local pinning
-- [ ] Phase 4 — Express API, MongoDB, and frontend sync
+- [ ] Phase 3 — Interactive Leaflet map
+- [ ] Phase 4 — Express, MongoDB and optional sync
 
-## Principles
-
-1. Keep initial network and JavaScript payloads small, without CDN dependencies at runtime.
-2. Treat user-generated audio as local until the user explicitly chooses to sync it.
-3. Do not pre-cache audio recordings or an entire map tile region.
-4. Respect informed consent, attribution, location privacy and the right to withdraw community stories.
-5. Keep each phase separate; placeholder files do not constitute an implemented feature.
-
-See `docs/architecture.md` for the system boundary and `docs/repository-layout.md` for the complete file map.
+The product will not use AI engines, models, AI APIs or AI features.

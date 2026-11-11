@@ -1,1 +1,84 @@
-/* Phase 0 placeholder: low-bandwidth mobile-first styling in later phases. */
+:root {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #18362d;
+  background-color: #f7f5ef;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+audio:focus-visible {
+  outline: 3px solid #c45a2e;
+  outline-offset: 4px;
+}
+
+.status-dot {
+  display: inline-block;
+  height: 0.6rem;
+  width: 0.6rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background-color: #648777;
+}
+
+[data-state="requesting"] .status-dot,
+[data-state="stopping"] .status-dot {
+  background-color: #d28a37;
+}
+
+[data-state="recording"] .status-dot {
+  background-color: #c04832;
+  box-shadow: 0 0 0 5px rgba(192, 72, 50, 0.12);
+}
+
+.waveform {
+  height: 3.5rem;
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.waveform span {
+  display: block;
+  width: 0.3rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  background: #a9bbaf;
+  transform-origin: center;
+}
+
+.waveform span:nth-child(3n + 1) { height: 1.15rem; }
+.waveform span:nth-child(4n + 2) { height: 1.85rem; }
+
+[data-state="recording"] .waveform span {
+  background: #c4684f;
+  animation: voice-bounce 850ms ease-in-out infinite alternate;
+}
+
+[data-state="recording"] .waveform span:nth-child(2n) { animation-delay: 140ms; }
+[data-state="recording"] .waveform span:nth-child(3n) { animation-delay: 260ms; }
+[data-state="recording"] .waveform span:nth-child(5n) { animation-delay: 370ms; }
+
+[data-feedback][data-error="true"] {
+  color: #9e3223;
+}
+
+@keyframes voice-bounce {
+  from { transform: scaleY(0.5); }
+  to { transform: scaleY(1.8); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-state="recording"] .waveform span {
+    animation: none;
+  }
+}

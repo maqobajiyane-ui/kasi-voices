@@ -1,7 +1,19 @@
 {
   "name": "@kasivoices/frontend",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
-  "description": "Phase 0 placeholder; runtime dependencies and scripts added in later phases"
+  "description": "Browser-only KasiVoices recorder; no server, map, or IndexedDB logic",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test tests/*.test.js"
+  },
+  "devDependencies": {
+    "vite": "^7.1.0",
+    "tailwindcss": "^3.4.17",
+    "postcss": "^8.5.3",
+    "autoprefixer": "^10.4.21"
+  }
 }

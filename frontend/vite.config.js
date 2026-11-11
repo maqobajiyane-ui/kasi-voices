@@ -1,1 +1,7 @@
-// Phase 0 placeholder. Functional implementation intentionally deferred.
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  build: {
+    target: 'es2020',
+  },
+});

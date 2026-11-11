@@ -1,1 +1,6 @@
-// Phase 0 placeholder. Functional implementation intentionally deferred.
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
